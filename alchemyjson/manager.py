@@ -6,7 +6,8 @@ import datetime
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.inspection import inspect
 from sqlalchemy.sql.functions import func
-from alchemyjson.utils.helpers import to_dict, evaluate_functions, count, primary_key_names
+from alchemyjson.utils.helpers import to_dict, evaluate_functions, count, primary_key_names, has_field, get_columns, \
+    get_relations, strings_to_dates
 from alchemyjson.utils.search import SearchParameters, create_query, OPERATORS
 
 __author__ = 'chiesa'
@@ -55,6 +56,86 @@ class Manager(object):
 
     def to_json(self, myDict):
         return self._encoder.encode(myDict)
+
+    def insert(self, modelName, data):
+        """Creates a new instance of a given model.
+        After that, it separates all columns that defines relationships with
+        other entities, creates a model with the simple columns and then
+        creates instances of these submodels and associates them with the
+        related fields. This happens only at the first level of nesting.
+        Currently, this method can only handle instantiating a model with a
+        single level of relationship data.
+        """
+        model = self.get_model(modelName)
+        for field in data:
+            if not has_field(model, field):
+                msg = "Model does not have field '{0}'".format(field)
+                raise Exception, msg
+
+        # Getting the list of relations that will be added later
+        cols = get_columns(model)
+        relations = get_relations(model)
+
+        # Looking for what we're going to set on the model right now
+        colkeys = cols.keys()
+        paramkeys = data.keys()
+        props = set(colkeys).intersection(paramkeys).difference(relations)
+
+        # Special case: if there are any dates, convert the string form of the
+        # date into an instance of the Python ``datetime`` object.
+        data = strings_to_dates(model, data)
+
+        try:
+            # Instantiate the model with the parameters.
+            modelargs = dict([(i, data[i]) for i in props])
+            instance = self.model(**modelargs)
+
+            # Handling relations, a single level is allowed
+            for col in set(relations).intersection(paramkeys):
+                submodel = get_related_model(self.model, col)
+
+                if type(data[col]) == list:
+                    # model has several related objects
+                    for subparams in data[col]:
+                        subinst = get_or_create(self.session, submodel,
+                                                subparams)
+                        try:
+                            getattr(instance, col).append(subinst)
+                        except AttributeError:
+                            attribute = getattr(instance, col)
+                            attribute[subinst.key] = subinst.value
+                else:
+                    # model has single related object
+                    subinst = get_or_create(self.session, submodel,
+                                            data[col])
+                    setattr(instance, col, subinst)
+
+            # add the created model to the session
+            self.session.add(instance)
+            self.session.commit()
+            # Get the dictionary representation of the new instance.
+            result = self._inst_to_dict(instance)
+            # Determine the value of the primary key for this instance and
+            # encode URL-encode it (in case it is a Unicode string).
+            pk_name = self.primary_key or primary_key_name(instance)
+            primary_key = result[pk_name]
+            try:
+                primary_key = str(primary_key)
+            except UnicodeEncodeError:
+                primary_key = url_quote_plus(primary_key.encode('utf-8'))
+
+            # The URL at which a client can access the newly created instance
+            # of the model.
+            url = '{0}/{1}'.format(request.base_url, primary_key)
+            # Provide that URL in the Location header in the response.
+            headers = dict(Location=url)
+
+            for postprocessor in self.postprocessors['POST']:
+                postprocessor(result=result)
+
+            return result, 201, headers
+        except self.validation_exceptions as exception:
+            return self._handle_validation_exception(exception)
 
 
 
