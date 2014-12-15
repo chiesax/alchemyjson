@@ -1,6 +1,7 @@
 from contextlib import closing
 from alchemyjson.tests.initializer import populate_test_db
 from alchemyjson.tests.mapping import Employees
+from alchemyjson.utils.helpers import to_dict
 from alchemyjson.utils.search import SearchParameters, create_query
 
 __author__ = 'chiesa'
@@ -36,5 +37,6 @@ class TestMain(unittest.TestCase):
             q = create_query(session, Employees, sp)
             e = q.one()
             self.assertEqual(e.name,'michael')
+            print to_dict(e)
 
 
