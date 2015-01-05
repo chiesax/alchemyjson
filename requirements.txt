@@ -6,11 +6,6 @@ configuration_manager>1.6
 # If the above is too much, you can use the following (useful outside Alpes)
 #configuration_manager_light
 
-#because sphinx 1.2 cannot build the docs with python setup.py build_sphinx
-# sphinx is typically among the dependencies that aren't needed for the released project.
-sphinx==1.1.3
-
-ipython
-
 #For logging
 logserviceclient
+sqlalchemy
