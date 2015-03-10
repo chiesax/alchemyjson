@@ -12,9 +12,9 @@ from alchemyjson.utils.search import SearchParameters, create_query, OPERATORS
 
 __author__ = 'chiesa'
 
-class MyJsonEncoder(json.JSONEncoder):
 
-   def default(self, obj):
+class MyJsonEncoder(json.JSONEncoder):
+    def default(self, obj):
         if isinstance(obj, datetime.datetime):
             return obj.isoformat()
         elif isinstance(obj, datetime.date):
@@ -28,6 +28,7 @@ class MyJsonEncoder(json.JSONEncoder):
         else:
             return super(MyJsonEncoder, self).default(obj)
 
+
 class Manager(object):
 
     def __init__(self, dbConnection, maxResultsPerPage=100):
@@ -36,12 +37,11 @@ class Manager(object):
         self._encoder = MyJsonEncoder()
         self._maxResultsPerPage = maxResultsPerPage
 
-
     def add_model(self, model, name=None):
         if not name:
             name = inspect(model).mapped_table.name
         if name in self.models:
-            raise ValueError, 'model with name {0} already added'.format(name)
+            raise ValueError('model with name {0} already added'.format(name))
         self.models[name] = model
 
     def get_model(self, modelName):
@@ -56,7 +56,6 @@ class Manager(object):
 
     def to_json(self, myDict):
         return self._encoder.encode(myDict)
-
 
     #TODO: maxPerPage actually queries the database for the whole query set
     def select(self, modelName, queryDict=None, page=1, maxPerPage=None):
@@ -73,14 +72,12 @@ class Manager(object):
                 return self._evaluate_functions(session, model, functions,
                                                 sp)
             else:
-                obj = q.all()
                 if maxPerPage is None:
                     maxPerPage = self._maxResultsPerPage
-                return self._paginated(obj, page_num=page,
+                return self._paginated(q, page_num=page,
                                        results_per_page=maxPerPage)
 
-
-    def _paginated(self, instances, page_num, results_per_page):
+    def _paginated(self, query, page_num, results_per_page):
         """Returns a paginated JSONified response from the specified list of
         model instances.
         `instances` is either a Python list of model instances or a
@@ -94,7 +91,7 @@ class Manager(object):
              "objects": [{"id": 1, "name": "Jeffrey", "age": 24}, ...]
            }
         """
-        num_results = len(instances)
+        num_results = query.count()
         if results_per_page > 0:
             # get the page number (first page is page 1)
             start = (page_num - 1) * results_per_page
@@ -105,7 +102,7 @@ class Manager(object):
             start = 0
             end = num_results
             total_pages = 1
-        objects = [to_dict(x) for x in instances[start:end]]
+        objects = [to_dict(x) for x in query[start:end]]
         return dict(page=page_num, objects=objects, total_pages=total_pages,
                     num_results=num_results)
 
