@@ -15,6 +15,7 @@ from sqlalchemy import and_ as AND
 from sqlalchemy import or_ as OR
 from sqlalchemy.ext.associationproxy import AssociationProxy
 from sqlalchemy.orm.attributes import InstrumentedAttribute
+from sqlalchemy.sql.expression import nullslast
 
 from .helpers import session_query
 from .helpers import get_related_association_proxy_model
@@ -104,7 +105,7 @@ OPERATORS = {
 class OrderBy(object):
     """Represents an "order by" in a SQL query expression."""
 
-    def __init__(self, field, direction='asc'):
+    def __init__(self, field, direction='asc', nullsmode=None):
         """Instantiates this object with the specified attributes.
         `field` is the name of the field by which to order the result set.
         `direction` is either ``'asc'`` or ``'desc'``, for "ascending" and
@@ -112,6 +113,7 @@ class OrderBy(object):
         """
         self.field = field
         self.direction = direction
+        self.nullsmode = nullsmode
 
     def __repr__(self):
         """Returns a string representation of this object."""
@@ -362,6 +364,8 @@ class QueryBuilder(object):
             for val in search_params.order_by:
                 field = getattr(model, val.field)
                 direction = getattr(field, val.direction)
+                if val.nullsmode:
+                    direction = getattr(direction(), val.nullsmode)
                 query = query.order_by(direction())
         else:
             pks = primary_key_names(model)
