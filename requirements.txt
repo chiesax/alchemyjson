@@ -1,11 +1,2 @@
-#comments are allowed, starting with #
-#Any of what is in here isn't mandatory for the final project, it's up to 
-# you as a developer to add your dependencies
-# One exception is the configuration_manager below: it's explicitly used in the template
-configuration_manager>1.6
-# If the above is too much, you can use the following (useful outside Alpes)
-#configuration_manager_light
-
-#For logging
 logserviceclient
 sqlalchemy
