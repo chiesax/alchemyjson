@@ -2,11 +2,8 @@ from alchemyjson.manager import Manager
 
 __author__ = 'chiesa'
 
-from contextlib import closing
 from alchemyjson.tests.initializer import populate_test_db
 from alchemyjson.tests.mapping import Employees, Managers
-from alchemyjson.utils.helpers import to_dict
-from alchemyjson.utils.search import SearchParameters, create_query
 
 # -*- coding: utf-8 -*-
 """
