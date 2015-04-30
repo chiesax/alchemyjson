@@ -31,6 +31,11 @@ class MyJsonEncoder(json.JSONEncoder):
 
 class Manager(object):
 
+    NULL_RESULT = dict(num_results=0,
+                       objects=[],
+                       total_pages=0,
+                       page=1)
+
     def __init__(self, dbConnection, maxResultsPerPage=100):
         self.dbConnection = dbConnection
         self.models = {}
