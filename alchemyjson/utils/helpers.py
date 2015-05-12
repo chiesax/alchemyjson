@@ -243,7 +243,7 @@ def is_mapped_class(cls):
 # http://stackoverflow.com/q/1958219/108197.
 def to_dict(instance, deep=None, exclude=None, include=None,
             exclude_relations=None, include_relations=None,
-            include_methods=None):
+            include_methods=None, include_hybrids=True):
     """Returns a dictionary representing the fields of the specified `instance`
     of a SQLAlchemy model.
     The returned dictionary is suitable as an argument to
@@ -285,9 +285,12 @@ def to_dict(instance, deep=None, exclude=None, include=None,
         inspected_instance = sqlalchemy_inspect(instance_type)
         column_attrs = inspected_instance.column_attrs.keys()
         descriptors = inspected_instance.all_orm_descriptors.items()
-        hybrid_columns = [k for k, d in descriptors
-                          if d.extension_type == hybrid.HYBRID_PROPERTY
-                          and not (deep and k in deep)]
+        if include_hybrids:
+            hybrid_columns = [k for k, d in descriptors
+                              if d.extension_type == hybrid.HYBRID_PROPERTY
+                              and not (deep and k in deep)]
+        else:
+            hybrid_columns = []
         columns = column_attrs + hybrid_columns
     except NoInspectionAvailable:
         return instance
