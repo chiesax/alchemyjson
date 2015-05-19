@@ -39,15 +39,17 @@ class Manager(object):
     def __init__(self, dbConnection, maxResultsPerPage=100):
         self.dbConnection = dbConnection
         self.models = {}
+        self.modelDictKargs = {}
         self._encoder = MyJsonEncoder()
         self._maxResultsPerPage = maxResultsPerPage
 
-    def add_model(self, model, name=None):
+    def add_model(self, model, name=None, toDictKargs=None):
         if not name:
             name = inspect(model).mapped_table.name
         if name in self.models:
             raise ValueError('model with name {0} already added'.format(name))
         self.models[name] = model
+        self.modelDictKargs[name] = toDictKargs or {}
 
     def get_model(self, modelName):
         return self.models[modelName]
@@ -57,7 +59,7 @@ class Manager(object):
         with closing(self.dbConnection.get_session()) as session:
             inst = session.query(model).filter(getattr(model, fieldName) == value).\
                             one()
-            return to_dict(inst)
+            return to_dict(inst, **self.modelDictKargs[modelName])
 
     def to_json(self, myDict):
         return self._encoder.encode(myDict)
@@ -66,13 +68,14 @@ class Manager(object):
     def select(self, modelName, queryDict=None, page=1, maxPerPage=None):
         if not queryDict: queryDict = {}
         model = self.get_model(modelName)
+        modelDictKargs = self.modelDictKargs[modelName]
         with closing(self.dbConnection.get_session()) as session:
             sp = SearchParameters.from_dictionary(queryDict)
             q = create_query(session, model, sp)
             is_single = queryDict.get('single')
             functions = queryDict.get('functions')
             if is_single:
-                return to_dict(q.one())
+                return to_dict(q.one(), **modelDictKargs)
             elif functions:
                 return self._evaluate_functions(session, model, functions,
                                                 sp)
@@ -80,9 +83,10 @@ class Manager(object):
                 if maxPerPage is None:
                     maxPerPage = self._maxResultsPerPage
                 return self._paginated(q, page_num=page,
-                                       results_per_page=maxPerPage)
+                                       results_per_page=maxPerPage,
+                                       model_dict_kargs=modelDictKargs)
 
-    def _paginated(self, query, page_num, results_per_page):
+    def _paginated(self, query, page_num, results_per_page, model_dict_kargs=None):
         """Returns a paginated JSONified response from the specified list of
         model instances.
         `instances` is either a Python list of model instances or a
@@ -107,7 +111,7 @@ class Manager(object):
             start = 0
             end = num_results
             total_pages = 1
-        objects = [to_dict(x) for x in query[start:end]]
+        objects = [to_dict(x, **(model_dict_kargs or {})) for x in query[start:end]]
         return dict(page=page_num, objects=objects, total_pages=total_pages,
                     num_results=num_results)
 
