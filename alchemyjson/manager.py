@@ -77,7 +77,7 @@ class Manager(object):
             functions = queryDict.get('functions')
             todict = queryDict.get('to_dict', {})
             modelDictKargs.update(todict)
-            jload = todict.pop('joinedload', None)
+            jload = queryDict.pop('joinedload', None)
             if jload:
                 q = q.options(*(joinedload(x) for x in jload))
             if is_single:

@@ -55,5 +55,6 @@ class TestMain(unittest.TestCase):
     def test_deep_select(self):
 
         rsp5 = self.manager.select('managers',
-                                   {'to_dict': {'deep':{'employees':[]}}})
+                                   {'to_dict': {'deep':{'employees':[]}},
+                                   'joinedload': ['employees']})
         pass
