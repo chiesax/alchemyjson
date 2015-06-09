@@ -52,3 +52,8 @@ class TestMain(unittest.TestCase):
                                          'offset':0})
         self.assertEqual(rsp4['num_results'], 1)
 
+    def test_deep_select(self):
+
+        rsp5 = self.manager.select('managers',
+                                   {'to_dict': {'deep':{'employees':[]}}})
+        pass

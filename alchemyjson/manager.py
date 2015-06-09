@@ -5,6 +5,7 @@ import json
 import datetime
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.inspection import inspect
+from sqlalchemy.orm import joinedload
 from sqlalchemy.sql.functions import func
 from alchemyjson.utils.helpers import to_dict, evaluate_functions, count, primary_key_names, has_field, get_columns, \
     get_relations, strings_to_dates
@@ -74,6 +75,11 @@ class Manager(object):
             q = create_query(session, model, sp)
             is_single = queryDict.get('single')
             functions = queryDict.get('functions')
+            todict = queryDict.get('to_dict', {})
+            modelDictKargs.update(todict)
+            jload = todict.pop('joinedload', None)
+            if jload:
+                q = q.options(*(joinedload(x) for x in jload))
             if is_single:
                 return to_dict(q.one(), **modelDictKargs)
             elif functions:
@@ -86,7 +92,8 @@ class Manager(object):
                                        results_per_page=maxPerPage,
                                        model_dict_kargs=modelDictKargs)
 
-    def _paginated(self, query, page_num, results_per_page, model_dict_kargs=None):
+    def _paginated(self, query, page_num, results_per_page, model_dict_kargs=None,
+                   relload=None):
         """Returns a paginated JSONified response from the specified list of
         model instances.
         `instances` is either a Python list of model instances or a
