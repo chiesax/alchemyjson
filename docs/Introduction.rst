@@ -89,6 +89,16 @@ descending order and limit the result to 2 rows::
                                 'offset':0})
 
 
+It is also possible to apply filter conditions involving the comparison of two
+fields::
+
+    print almanager.select('managers', {'filters':[{'name':'name',
+                                        'op':'eq',
+                                        'otherfield':'name'}])
+
+This stupid query will return all managers whose name column equals the name columns,
+that is the whole table.
+
 By default only the table rows are returned, not relationships. But this is also
 easy::
 

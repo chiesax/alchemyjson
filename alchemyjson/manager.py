@@ -73,45 +73,47 @@ class Manager(object):
         Issue a SELECT statement on the table corresponding to modelName.
         Results are paginaged and the page to be returned or the maximum
         number of results per table may be specified.
-        :param modelName: the name of the model within
-        :param queryDict: if not specified, then the whole table
-        will be queried. It is a dictionary of the form::
-            {
-              'filters': [{'name': 'age', 'op': 'lt', 'val': 20}, ...],
-              'order_by': [{'field': 'age', 'direction': 'desc'}, ...]
-              'limit': 10,
-              'offset': 3,
-              'disjunction': True,
-              'to_dict': {'deep':{'employees':[]}},
 
-            }
-        where:
-            * ``filters`` is the list of filter specifications,
-            * ``order_by`` is the list of order by specifications,
-            * ``limit`` is the maximum number of total matching entries to return,
-            * ``offset`` is the number of initial entries to skip in
-                    the matching result set,
-            * ``disjunction`` is whether the filters should be joined as a disjunction (AND) or conjunction (OR),
-                    defaults to True
-            * ``to_dict`` specifies the configuration for the SQLAlchemy objects serializer.
-            * ``joinedload`` specifies a list of relations to be loaded using the
-               SQLAlchemy joinedload strategy (by default lazy load is used which
-               is not very efficient when serializing relations)
-        :param page: the page number to be returned
-        :param maxPerPage: the maximum number of results per page, defaults
-        to the maxResultsPerPage attribute,
-        :return dict: a dictionary of the form:
-        .. sourcecode:: javascript
-           {
-             "page": 2,
-             "total_pages": 3,
-             "num_results": 8,
-             "objects": [{"id": 1, "name": "Jeffrey", "age": 24}, ...]
-           }
-        This may depends on some queryDict parameters,
-        to decide for instance whether related models should be returned
-        as well. Here num_results is the total number of results matching the queryDict.
-        As said, however, only maxPerPage results will be returned by each select.
+        :param modelName str: the name of the model within the Manager
+        :param queryDict dict: if not specified, then the whole table
+            will be queried. It is a dictionary of the form::
+
+                {
+                  "filters": [{"name": "age", "op": "lt", "val": 20}, ...],
+                  "order_by": [{"field": "age", "direction": "desc"}, ...],
+                  "limit": 10,
+                  "offset": 3,
+                  "disjunction": True,
+                  "to_dict": {"deep":{"employees":[]}},
+                  "joinedload" : ["employees"],
+                }
+            where:
+                * ``filters`` is the list of filter specifications,
+                * ``order_by`` is the list of order by specifications,
+                * ``limit`` is the maximum number of total matching entries to return,
+                * ``offset`` is the number of initial entries to skip in
+                  the matching result set,
+                * ``disjunction`` is whether the filters should be joined as a disjunction (AND) or conjunction (OR),
+                  defaults to True (AND)
+                * ``to_dict`` specifies the configuration for the SQLAlchemy objects serializer.
+                * ``joinedload`` specifies a list of relations to be loaded using the
+                  SQLAlchemy joinedload strategy (by default lazy load is used which
+                  is not very efficient when serializing relations)
+        :param page int: the page number to be returned
+        :param maxPerPage int: the maximum number of results per page, defaults
+            to the maxResultsPerPage attribute,
+        :return dict: a dictionary of the form::
+
+               {
+                 "page": 2,
+                 "total_pages": 3,
+                 "num_results": 8,
+                 "objects": [{"id": 1, "name": "Jeffrey", "age": 24}, ...]
+               }
+            This may depends on some queryDict parameters,
+            to decide for instance whether related models should be returned
+            as well. Here num_results is the total number of results matching the queryDict.
+            As said, however, only maxPerPage results will be returned by each select.
         """
         if not queryDict: queryDict = {}
         model = self.get_model(modelName)
