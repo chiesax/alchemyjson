@@ -7,7 +7,8 @@ Contents:
 .. toctree::
    :maxdepth: 2
   
-   Documentation
+   Introduction
+
 
 
 Indices and tables

@@ -65,7 +65,6 @@ class Manager(object):
     def to_json(self, myDict):
         return self._encoder.encode(myDict)
 
-    #TODO: maxPerPage actually queries the database for the whole query set
     def select(self, modelName, queryDict=None, page=1, maxPerPage=None):
         if not queryDict: queryDict = {}
         model = self.get_model(modelName)
