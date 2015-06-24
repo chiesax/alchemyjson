@@ -63,8 +63,6 @@ Then let's create an interface using :py:mod:`alchemyjson`::
 These calls will actually apply the SQL function count to both models and return
 the number of rows in the table.
 
-
-
 By default, a model is referenced by its table name. It is also possible
 to specify the name of the model within the :py:class:`alchemyjson.Manager`::
 
