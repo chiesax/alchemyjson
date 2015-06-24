@@ -16,8 +16,8 @@ has many advantages:
     * implement an abstract authentication layer;
 
 :py:mod:`alchemyjson` then helps constructing such an infrastructure by providing
-a simple interface to query (and in the future possibly also update, insert
-and delete) database tables.
+a simple and homogeneous interface to query (and in the future possibly also update, insert
+and delete) database tables and their relations.
 
 This package has been adapted from the :py:mod:`flask-restless` package.
 
@@ -52,26 +52,28 @@ Then let's create an interface using :py:mod:`alchemyjson`::
     from alchemyjson.tests.mapping import Managers as MyManagers
 
     db = populate_test_db()
-    m = Manager(dbConnection=db)
-    m.add_model(Employees)
-    m.add_model(MyManagers)
-    print m.select('managers', {'functions':[{'name':'count',
+    almanager = Manager(dbConnection=db)
+    almanager.add_model(Employees)
+    almanager.add_model(MyManagers)
+    print almanager.select('managers', {'functions':[{'name':'count',
                    'field':'id'}]})
-    print m.select('employees', {'functions':[{'name':'count',
+    print almanager.select('employees', {'functions':[{'name':'count',
                    'field':'id'}]})
 
 These calls will actually apply the SQL function count to both models and return
 the number of rows in the table.
 
+
+
 By default, a model is referenced by its table name. It is also possible
 to specify the name of the model within the :py:class:`alchemyjson.Manager`::
 
-    m.add_model(MyManagers, name='managers2')
-    m.select('managers2')
+    almanager.add_model(MyManagers, name='managers2')
+    almanager.select('managers2')
 
 It is of course possible to query rows. To query all the rows in the table::
 
-    print m.select('managers')
+    print almanager.select('managers')
 
 .. note::
     Results are paginated, with a default maximum number of
@@ -80,7 +82,7 @@ It is of course possible to query rows. To query all the rows in the table::
 Or we may select all managers whose name equals 'johnny', order them by
 descending order and limit the result to 2 rows::
 
-    print m.select('managers', {'filters':[{'name':'name',
+    print almanager.select('managers', {'filters':[{'name':'name',
                                             'op':'eq',
                                             'val':'johnny'}],
                                 'order_by':[{'field':'name',
@@ -92,7 +94,7 @@ descending order and limit the result to 2 rows::
 By default only the table rows are returned, not relationships. But this is also
 easy::
 
-    m.select('managers', {'to_dict': {'deep':{'employees':[]}},
+    almanager.select('managers', {'to_dict': {'deep':{'employees':[]}},
                           'joinedload': ['employees']})
 
 This tells :py:mod:`alchemyjson` to return the employees relationship as a list.
@@ -100,5 +102,40 @@ This tells :py:mod:`alchemyjson` to return the employees relationship as a list.
 .. note::
     The joinedload option makes the query more efficient as only one select statement is actually
     executed, note however that this is not the default behavior.
+
+--------------------------
+JSON conversion
+--------------------------
+
+Results returned by select, and arguments to select are actually
+plain python dictionaries. It is however quite straightforward
+to convert them to JSON::
+
+    almanager.to_json(almanager.select('employees'))
+
+The reason we do not do this by default is that conversion of some python
+types to JSON is not supported in python, as for instance :py:mod:`datetime`
+objects, :py:class:`decimal.Decimal` or :py:class:`numpy.array`, and the
+conversion may be use case specific. This can be customized by initializing the
+:py:class:`alchemyjson.Manager` with your json encoder. In this example
+we show the default encoder used by :py:mod:`alchemyjson`::
+
+    import json
+    class MyJsonEncoder(json.JSONEncoder):
+        def default(self, obj):
+            if isinstance(obj, datetime.datetime):
+                return obj.isoformat()
+            elif isinstance(obj, datetime.date):
+                return obj.isoformat()
+            elif isinstance(obj, datetime.timedelta):
+                return (datetime.datetime.min + obj).time().isoformat()
+            elif isinstance(obj, decimal.Decimal):
+                return float(obj)
+            elif type(obj).__name__ == 'ndarray':
+                return list(obj)
+            else:
+                return super(MyJsonEncoder, self).default(obj)
+
+    m2 = Manager(dbConnection=db, encoder=MyJsonEncoder())
 
 

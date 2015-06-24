@@ -37,11 +37,14 @@ class Manager(object):
                        total_pages=0,
                        page=1)
 
-    def __init__(self, dbConnection, maxResultsPerPage=100):
+    def __init__(self, dbConnection, maxResultsPerPage=100,
+                 encoder=None):
         self.dbConnection = dbConnection
         self.models = {}
         self.modelDictKargs = {}
-        self._encoder = MyJsonEncoder()
+        self._encoder = encoder
+        if self._encoder is None:
+            self._encoder = MyJsonEncoder()
         self._maxResultsPerPage = maxResultsPerPage
 
     def add_model(self, model, name=None, toDictKargs=None):
@@ -66,6 +69,16 @@ class Manager(object):
         return self._encoder.encode(myDict)
 
     def select(self, modelName, queryDict=None, page=1, maxPerPage=None):
+        """
+        Issue a SELECT statement on the table corresponding to modelName.
+        Results are paginaged and the page to be returned or the maximum
+        number of results per table may be specified.
+        :param modelName:
+        :param queryDict:
+        :param page:
+        :param maxPerPage:
+        :return:
+        """
         if not queryDict: queryDict = {}
         model = self.get_model(modelName)
         modelDictKargs = self.modelDictKargs[modelName]
