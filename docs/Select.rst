@@ -128,6 +128,8 @@ Or to get all managers which have at least an employee with the same name as the
                                 'field': 'name'}]})
 
 .. important::
+    According to Postgresql documentation, usage of ANY or HAS operators
+    is less efficient than using a JOIN.
 
 --------
 order_by
@@ -156,7 +158,7 @@ This specification controls the data returned by :meth:`select <alchemyjson.mana
 
 This has the form::
 
-   {"deep": {"<relation name>":{"<relation name>": ... }}, # recursive structure
+   {"deep": {"<relation name>":{"<relation name>": dict or list, ... }}, # recursive structure
     "exclude": ["<list of excluded column attributes>", ...],
     "include": ["<list of included column attributes>", ...],
     "include_relations": {"<relation name>": ["<list of included column attributes>", ...], ...},
@@ -165,9 +167,15 @@ This has the form::
     "include_hybrids": True or False
     }
 
+This structure is just passed as keywords arguments to the
+:func:`alchemyjson.utils.helpers.to_dict` function. For more details,
+please refer to the function documentation.
+
 .. warning::
    Only the ``deep`` and ``include_hybrids`` specifications have been tested
-   at present.
+   at present. Also, note that the specification of ``include`` or ``exclude``
+   will not affect what columns are actually queried from the database, but
+   only which columns are serialized.
 
 deep
 ^^^^
@@ -176,3 +184,8 @@ Is a dictionary containing a mapping from a relation name (for a
 relation of `instance`) to either a list or a dictionary. This is a
 recursive structure. When an empty list is encountered, the :meth:`select <alchemyjson.manager.Manager.select>`
 method will return a list of table rows corresponding to the relation.
+
+include_hybrids
+^^^^^^^^^^^^^^^
+
+Specifies whether hybrid SQLAlchemy column attributes should be returned or not.
