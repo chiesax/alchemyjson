@@ -51,6 +51,31 @@ class TestMain(unittest.TestCase):
                                          'limit':2,
                                          'offset':0})
         self.assertEqual(rsp4['num_results'], 1)
+        rsp5 = self.manager.select('employees', {'filters':[{'name':'name',
+                                                             'op':'eq',
+                                                             'field':'surname'}]})
+        self.assertEqual(rsp5['num_results'], 1)
+
+    def test_has_any(self):
+        rsp = self.manager.select('managers',
+                                  {'filters': [{'name': 'employees',
+                                                'op': 'any',
+                                                'val': {'name': 'name',
+                                                        'op': 'eq',
+                                                        'val': 'jack'}}]})
+        self.assertEqual(rsp['num_results'], 1)
+        rsp = self.manager.select('managers',
+                                  {'filters': [{'name': 'employees',
+                                                'op': 'any',
+                                                'val': {'name': 'name',
+                                                        'op': 'eq',
+                                                        'val': 'qqq'}}]})
+        self.assertEqual(rsp['num_results'], 0)
+        rsp = self.manager.select('managers',
+                                  {'filters': [{'name': 'employees__name',
+                                                'op': 'any',
+                                                'field': 'name'}]})
+        self.assertEqual(rsp['num_results'], 0)
 
     def test_deep_select(self):
 

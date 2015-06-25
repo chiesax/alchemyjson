@@ -74,7 +74,7 @@ to specify the name of the model within the :py:class:`Manager <alchemyjson.mana
     almanager.add_model(Managers, name='managers2')
     almanager.select('managers2')
 
-It is of course possible to query rows. To query all the rows in the table::
+Of course it is also possible to query rows! To query all the rows in the table::
 
     print almanager.select('managers')
 
@@ -99,7 +99,7 @@ fields::
 
     print almanager.select('managers', {'filters':[{'name':'id',
                                         'op':'eq',
-                                        'otherfield':'id'}])
+                                        'field':'id'}]})
 
 This stupid query will return all managers whose *id* attribute equals the *id* attribute,
 that is the whole table.

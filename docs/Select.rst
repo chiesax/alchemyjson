@@ -19,6 +19,11 @@ returned data. It is of the form::
    "functions" : [{"name":"count", "field":"id"}, {"name":"sum", "field":"id"}, ...]
    }
 
+.. important::
+   The goal of this library is NOT to provide all functionality of SQLAlchemy,
+   but rather a sub set of frequently used constructs. For construction of
+   more sofisticated queries
+
 filters
 ----------
 
@@ -27,41 +32,86 @@ It is a list of filter specifications, where every item of the list has the form
    {"name": "<field name of the SQLAlchemy column attribute>",
     "op": "<the name of the operator for the filter>",
     "val": "<a value to apply the operator>",
-    "otherfield": "<the name of another column attribute to apply the operator>"}
+    "field": "<the name of another column attribute to apply the operator>"}
 
 This is the list of currently supported operators for filter specifications:
 
 .. csv-table:: filter_specifications
-   :header:    op, description, val or otherfield
+   :header:    op, description, val or field
 
    is_null, field = NULL , not used
    is_not_null, field != NULL, not used
-   ==, field = (val or otherfield), either one or the other
-   eq, field = (val or otherfield), either one or the other
-   equals, field = (val or otherfield), either one or the other
-   equals_to, field = (val or otherfield), either one or the other
-   !=, field != (val or otherfield), either one or the other
-   ne, field != (val or otherfield), either one or the other
-   neq, field != (val or otherfield), either one or the other
-   not_equal_to, field != (val or otherfield), either one or the other
-   does_not_equal, field != (val or otherfield), either one or the other
-   >, field > (val or otherfield), either one or the other
-   gt, field > (val or otherfield), either one or the other
-   <, field < (val or otherfield), either one or the other
-   lt, field < (val or otherfield), either one or the other
-   >=, field >= (val or otherfield), either one or the other
-   ge, field >= (val or otherfield), either one or the other
-   gte, field >= (val or otherfield), either one or the other
-   geq, field >= (val or otherfield), either one or the other
-   <=, field <= (val or otherfield), either one or the other
-   le, field <= (val or otherfield), either one or the other
-   lte, field <= (val or otherfield), either one or the other
-   leq, field <= (val or otherfield), either one or the other
-   ilike, field ILIKE val, val is a match string; otherfield not used
-   like,  field LIKE val, val is a match string; otherfield not used
-   in, field IN val, val is a list of values; otherfield not used
-   not_in, field NOT IN val, val is a list of values; otherfield not used
+   ==, field = (val or field), either one or the other
+   eq, field = (val or field), either one or the other
+   equals, field = (val or field), either one or the other
+   equals_to, field = (val or field), either one or the other
+   !=, field != (val or field), either one or the other
+   ne, field != (val or field), either one or the other
+   neq, field != (val or field), either one or the other
+   not_equal_to, field != (val or field), either one or the other
+   does_not_equal, field != (val or field), either one or the other
+   >, field > (val or field), either one or the other
+   gt, field > (val or field), either one or the other
+   <, field < (val or field), either one or the other
+   lt, field < (val or field), either one or the other
+   >=, field >= (val or field), either one or the other
+   ge, field >= (val or field), either one or the other
+   gte, field >= (val or field), either one or the other
+   geq, field >= (val or field), either one or the other
+   <=, field <= (val or field), either one or the other
+   le, field <= (val or field), either one or the other
+   lte, field <= (val or field), either one or the other
+   leq, field <= (val or field), either one or the other
+   ilike, field ILIKE val, val is a match string; field not used
+   like,  field LIKE val, val is a match string; field not used
+   in, field IN val, val is a list of values; field not used
+   not_in, field NOT IN val, val is a list of values; field not used
 
+filter on related tables
+----------------------------
+
+To construct a filter on a related table, the ``has`` or ``any`` operators may
+be used.
+
+   *``has``: can be used on `many to one` or `one to one` relations,
+    matches rows referencing a member which meets the given criterion;
+   *``any``: can be used on `one to many` or `many to many` relations,
+    matches rows referencing at least one member that meets the given criterion
+
+The filter specification item then has any of the two forms form::
+
+   {"name": "<relation name of the model>",
+    "op": "has or any",
+    "val": "<filter specification item>"}
+or::
+
+   {"name": "<relation name>_<field name of the related model>",
+    "op": "has or any",
+    "val": "<a value to apply the operator>",
+    "field": "<the name of another column attribute to apply the operator>"}
+
+It the former case, the matching criteria on related models is quite arbitrary, however
+it is not possible to specify ``field``, that is to specify a filter based on
+a comparison between columns of the same model.
+
+In the latter, an implicit filter on the related table is created matching the ``eq``
+operator.
+
+So for instance to filter all managers with at least an employee named 'jack'::
+
+   almanager.select('managers',
+                    {'filters': [{'name': 'employees',
+                                  'op': 'any',
+                                  'val': {'name': 'name',
+                                          'op': 'eq',
+                                          'val': 'jack'}}]})
+
+Or to get all managers which have at least an employee with the same name as theirs::
+
+   manager.select('managers',
+                  {'filters': [{'name': 'employees__name',
+                                'op': 'any',
+                                'field': 'name'}]})
 
 order_by
 ---------------

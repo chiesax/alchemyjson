@@ -28,8 +28,8 @@ def populate_test_db():
     tmpFile.close()
     dbConnection = create_temp_db(tmpFile.name)
     m1 = Managers(name='johnny')
-    e1 = Employees(name='michael')
-    e2 = Employees(name='jack')
+    e1 = Employees(name='michael', surname='michael')
+    e2 = Employees(name='jack', surname='j')
     m1.employees = [e1, e2]
     with closing(dbConnection.get_session()) as session:
         session.add(m1)

@@ -1,4 +1,5 @@
 from contextlib import closing
+from copy import deepcopy
 import decimal
 import math
 import json
@@ -117,7 +118,7 @@ class Manager(object):
         """
         if not queryDict: queryDict = {}
         model = self.get_model(modelName)
-        modelDictKargs = self.modelDictKargs[modelName]
+        modelDictKargs = deepcopy(self.modelDictKargs[modelName])
         with closing(self.dbConnection.get_session()) as session:
             sp = SearchParameters.from_dictionary(queryDict)
             q = create_query(session, model, sp)

@@ -21,6 +21,7 @@ class Employees(BASE):
 
     id = Column(Integer, primary_key=True)
     name = Column(String)
+    surname = Column(String)
     manager_id = Column(Integer, ForeignKey('managers.id'))
 
     manager = relationship(Managers, backref='employees')
