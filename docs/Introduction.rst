@@ -6,26 +6,28 @@ The scope of the package is to provide a JSON based interface to interact
 with a database mapped by SQLAlchemy.
 
 This is very useful when constructing a N-tier based infrastructure, where
-clients do not interact directly with the database, but though a server. This
+clients do not interact directly with the database, but through a server. This
 has many advantages:
 
     * the clients do not know about the database structure, so the database
       structure can change without affecting the clients;
+    * language agnostic, for instance javascript clients can easily access
+      the data;
     * business logic can be implemented in the server;
     * the server can be optimized for efficient database interaction;
-    * implement an abstract authentication layer;
+    * implement an abstract authentication and permissions layer;
 
-:py:mod:`alchemyjson` then helps constructing such an infrastructure by providing
+:mod:`alchemyjson` then helps constructing such an infrastructure by providing
 a simple and homogeneous interface to query (and in the future possibly also update, insert
 and delete) database tables and their relations.
 
-This package has been adapted from the :py:mod:`flask-restless` package.
+This package has been adapted from the :mod:`flask-restless` package.
 
 -----------------------------
-Examples
+Micro Tutorial
 -----------------------------
 
-Lets start with a very simple database mapping, which can be found in :py:mod:`alchemyjson.tests`::
+Lets start with a very simple database mapping, which can be found in :mod:`alchemyjson.tests`::
 
     class Managers(BASE):
 
@@ -48,25 +50,28 @@ Then let's create an interface using :py:mod:`alchemyjson`::
 
     from alchemyjson.tests.initializer import populate_test_db
     from alchemyjson.manager import Manager
-    from alchemyjson.tests.mapping import Employees
-    from alchemyjson.tests.mapping import Managers as MyManagers
+    from alchemyjson.tests.mapping import Employees, Managers
 
-    db = populate_test_db()
+    db = populate_test_db() # this will populate a test SQLite database
+                            # and return a :class:`aldb.BaseConnection` instance
     almanager = Manager(dbConnection=db)
     almanager.add_model(Employees)
-    almanager.add_model(MyManagers)
+    almanager.add_model(Managers)
+
+That's all! Now we can query our super models::
+
     print almanager.select('managers', {'functions':[{'name':'count',
-                   'field':'id'}]})
+                                                      'field':'id'}]})
     print almanager.select('employees', {'functions':[{'name':'count',
-                   'field':'id'}]})
+                                                       'field':'id'}]})
 
 These calls will actually apply the SQL function count to both models and return
 the number of rows in the table.
 
 By default, a model is referenced by its table name. It is also possible
-to specify the name of the model within the :py:class:`alchemyjson.Manager`::
+to specify the name of the model within the :py:class:`Manager <alchemyjson.manager.Manager>`::
 
-    almanager.add_model(MyManagers, name='managers2')
+    almanager.add_model(Managers, name='managers2')
     almanager.select('managers2')
 
 It is of course possible to query rows. To query all the rows in the table::
@@ -92,11 +97,11 @@ descending order and limit the result to 2 rows::
 It is also possible to apply filter conditions involving the comparison of two
 fields::
 
-    print almanager.select('managers', {'filters':[{'name':'name',
+    print almanager.select('managers', {'filters':[{'name':'id',
                                         'op':'eq',
-                                        'otherfield':'name'}])
+                                        'otherfield':'id'}])
 
-This stupid query will return all managers whose name column equals the name columns,
+This stupid query will return all managers whose *id* attribute equals the *id* attribute,
 that is the whole table.
 
 By default only the table rows are returned, not relationships. But this is also
@@ -125,7 +130,7 @@ The reason we do not do this by default is that conversion of some python
 types to JSON is not supported in python, as for instance :py:mod:`datetime`
 objects, :py:class:`decimal.Decimal` or :py:class:`numpy.array`, and the
 conversion may be use case specific. This can be customized by initializing the
-:py:class:`alchemyjson.Manager` with your json encoder. In this example
+:py:class:`Manager <alchemyjson.manager.Manager>` with your json encoder. In this example
 we show the default encoder used by :py:mod:`alchemyjson`::
 
     import json

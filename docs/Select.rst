@@ -3,13 +3,9 @@ Select
 ==========================
 
 As explained in the introduction, the method to be used for selecting
-table rows is :py:method:`alchemyjson.manager.Manager.select`.
+table rows is :meth:`select <alchemyjson.manager.Manager.select>`.
 
------------------------
-Query specification
------------------------
-
-The `queryDict` parameter specifies both the search parameters and the
+The `queryDict` parameter of this method specifies both the search parameters and the
 returned data. It is of the form::
 
    {
@@ -18,8 +14,9 @@ returned data. It is of the form::
    "limit": 10,
    "offset": 3,
    "disjunction": True,
-   "to_dict": {"deep":{"employees":[]}},
    "joinedload" : ["employees"],
+   "to_dict": {"deep":{"employees":[]}},
+   "functions" : [{"name":"count", "field":"id"}, {"name":"sum", "field":"id"}, ...]
    }
 
 filters
@@ -65,6 +62,20 @@ This is the list of currently supported operators for filter specifications:
    in, field IN val, val is a list of values; otherfield not used
    not_in, field NOT IN val, val is a list of values; otherfield not used
 
+
+order_by
+---------------
+
+It is a list of order by specifications, where every item of the list has the
+form::
+
+   {"field": "<field name of the SQLAlchemy attribute>",
+    "direction": "<the name of the operator for the direction>",
+    "nullsmode": "<optional, specify how NULL values are handled>"}
+
+where directions is either *asc* or *desc*. The ``nullsmode`` optional specification
+if either *nullslast* or *nullsfirts*, note that this is not supported by all
+database backends.
 
 
 .. autoclass:: alchemyjson.manager.Manager
