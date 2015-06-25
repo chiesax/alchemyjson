@@ -1,6 +1,5 @@
-
 Welcome to alchemyjson's documentation!
-===========================================================
+=======================================
 
 Contents:
 
@@ -10,11 +9,3 @@ Contents:
    Introduction
    Select
 
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
