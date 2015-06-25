@@ -1,31 +1,43 @@
-==========================
+======
 Select
-==========================
+======
 
 As explained in the introduction, the method to be used for selecting
 table rows is :meth:`select <alchemyjson.manager.Manager.select>`.
 
-The `queryDict` parameter of this method specifies both the search parameters and the
+The ``queryDict`` parameter of this method specifies both the search parameters and the
 returned data. It is of the form::
 
-   {
-   "filters": [{"name": "age", "op": "lt", "val": 20}, ...],
-   "order_by": [{"field": "age", "direction": "desc"}, ...],
-   "limit": 10,
-   "offset": 3,
-   "disjunction": True,
-   "joinedload" : ["employees"],
-   "to_dict": {"deep":{"employees":[]}},
-   "functions" : [{"name":"count", "field":"id"}, {"name":"sum", "field":"id"}, ...]
-   }
+   {"filters": [{"name": "age", "op": "lt", "val": 20}, ...],
+    "order_by": [{"field": "age", "direction": "desc"}, ...],
+    "limit": 10,
+    "offset": 3,
+    "disjunction": True,
+    "joinedload" : ["employees"],
+    "to_dict": {"deep":{"employees":[]}},
+    "functions" : [{"name":"count", "field":"id"}, {"name":"sum", "field":"id"}, ...]}
+
+The returned structure is a dictionary of the form::
+
+   {"page": 2,
+    "total_pages": 3,
+    "num_results": 8,
+    "objects": [{"id": 1, "name": "Jeffrey", "age": 24}, ...]}
+
+Here ``objects`` is a list containing the corresponding ``page`` of query
+results.
 
 .. important::
    The goal of this library is NOT to provide all functionality of SQLAlchemy,
-   but rather a sub set of frequently used constructs. For construction of
-   more sofisticated queries
+   but rather a frequently used sub set. For more sophisticated queries,
+   implementation of custom functions is recommended. The implementation of
+   :meth:`select <alchemyjson.manager.Manager.select>` may then serve
+   as an inspiration. Try however as far as possible to conform to the
+   ``queryDict`` specification and to return a similar structure.
 
+-------
 filters
-----------
+-------
 
 It is a list of filter specifications, where every item of the list has the form::
 
@@ -67,8 +79,9 @@ This is the list of currently supported operators for filter specifications:
    in, field IN val, val is a list of values; field not used
    not_in, field NOT IN val, val is a list of values; field not used
 
+------------------------
 filter on related tables
-----------------------------
+------------------------
 
 To construct a filter on a related table, the ``has`` or ``any`` operators may
 be used.
@@ -83,6 +96,7 @@ The filter specification item then has any of the two forms form::
    {"name": "<relation name of the model>",
     "op": "has or any",
     "val": "<filter specification item>"}
+
 or::
 
    {"name": "<relation name>_<field name of the related model>",
@@ -113,8 +127,11 @@ Or to get all managers which have at least an employee with the same name as the
                                 'op': 'any',
                                 'field': 'name'}]})
 
+.. important::
+
+--------
 order_by
----------------
+--------
 
 It is a list of order by specifications, where every item of the list has the
 form::
@@ -127,6 +144,35 @@ where directions is either *asc* or *desc*. The ``nullsmode`` optional specifica
 if either *nullslast* or *nullsfirts*, note that this is not supported by all
 database backends.
 
+-------
+to_dict
+-------
 
-.. autoclass:: alchemyjson.manager.Manager
-   :members: select
+This specification controls the data returned by :meth:`select <alchemyjson.manager.Manager.select>`.
+
+.. note::
+   If the ``function`` specification is set, then the ``to_dict`` specification
+   is ignored.
+
+This has the form::
+
+   {"deep": {"<relation name>":{"<relation name>": ... }}, # recursive structure
+    "exclude": ["<list of excluded column attributes>", ...],
+    "include": ["<list of included column attributes>", ...],
+    "include_relations": {"<relation name>": ["<list of included column attributes>", ...], ...},
+    "exclude_relations": {"<relation name>": ["<list of excluded column attributes>", ...], ...},
+    "include_methods": ["<list of computed methods of the corresponding SQLAlchemy objects>", ...]
+    "include_hybrids": True or False
+    }
+
+.. warning::
+   Only the ``deep`` and ``include_hybrids`` specifications have been tested
+   at present.
+
+deep
+^^^^
+
+Is a dictionary containing a mapping from a relation name (for a
+relation of `instance`) to either a list or a dictionary. This is a
+recursive structure. When an empty list is encountered, the :meth:`select <alchemyjson.manager.Manager.select>`
+method will return a list of table rows corresponding to the relation.
