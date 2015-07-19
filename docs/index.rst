@@ -8,4 +8,5 @@ Contents:
   
    Introduction
    Select
+   license
 
