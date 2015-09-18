@@ -14,6 +14,7 @@ import math
 import json
 import datetime
 from sqlalchemy.exc import OperationalError
+import inspect as fn_inspect
 from sqlalchemy.inspection import inspect
 from sqlalchemy.orm import joinedload
 from sqlalchemy.sql.functions import func
@@ -285,7 +286,7 @@ class Manager(object):
         """
         # raises KeyError if operator not in OPERATORS
         opfunc = OPERATORS[operator]
-        argspec = inspect.getargspec(opfunc)
+        argspec = fn_inspect.getargspec(opfunc)
         # in Python 2.6 or later, this should be `argspec.args`
         numargs = len(argspec[0])
         # raises AttributeError if `fieldname` or `relation` does not exist
