@@ -1,3 +1,12 @@
+# coding=utf-8
+"""
+    :copyright: 2015 Alpes Lasers SA, Neuchatel, Switzerland <samuele.chiesa@alpeslasers.ch>
+    :license: GNU AGPLv3+ or BSD
+
+    This code has been derived from flask-restless, Jeffrey Finkelstein <jeffrey.finkelstein@gmail.com>
+
+"""
+
 from contextlib import closing
 from copy import deepcopy
 import decimal

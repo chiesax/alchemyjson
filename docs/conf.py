@@ -51,8 +51,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u''
-copyright = u'2014, '
+project = u'alchemyjson'
+copyright = u'2015, Alpes Lasers SA'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -204,8 +204,8 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  ('index', '.tex', u' Documentation',
-   u'', 'manual'),
+  ('index', 'alchemyjson.tex', u'Alchemyjson Documentation',
+   u'Alpes Lasers SA', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
