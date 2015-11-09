@@ -10,12 +10,14 @@
     :license: GNU AGPLv3+ or BSD
 """
 import inspect
+import math
 
 from sqlalchemy import and_ as AND
 from sqlalchemy import or_ as OR
 from sqlalchemy.ext.associationproxy import AssociationProxy
 from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlalchemy.sql.expression import nullslast
+from alchemyjson.utils.helpers import to_dict
 
 from .helpers import session_query
 from .helpers import get_related_association_proxy_model
@@ -181,7 +183,7 @@ class SearchParameters(object):
     """
 
     def __init__(self, filters=None, limit=None, offset=None, order_by=None,
-                 junction=None):
+                 junction=None, no_order_by=False):
         """Instantiates this object with the specified attributes.
         `filters` is a list of :class:`Filter` objects, representing filters to
         be applied during the search.
@@ -202,6 +204,7 @@ class SearchParameters(object):
         self.offset = offset
         self.order_by = order_by or []
         self.junction = junction or AND
+        self.noOrderBy = no_order_by
 
     def __repr__(self):
         """Returns a string representation of the search parameters."""
@@ -357,20 +360,24 @@ class QueryBuilder(object):
         # may raise exception here
         filters = QueryBuilder._create_filters(model, search_params)
         query = query.filter(search_params.junction(*filters))
+        return QueryBuilder.finalize_query(model, query, search_params)
 
+    @staticmethod
+    def finalize_query(model, query, search_params):
         # Order the search. If no order field is specified in the search
         # parameters, order by primary key.
-        if search_params.order_by:
-            for val in search_params.order_by:
-                field = getattr(model, val.field)
-                direction = getattr(field, val.direction)
-                if val.nullsmode:
-                    direction = getattr(direction(), val.nullsmode)
-                query = query.order_by(direction())
-        else:
-            pks = primary_key_names(model)
-            pk_order = (getattr(model, field).asc() for field in pks)
-            query = query.order_by(*pk_order)
+        if not search_params.noOrderBy:
+            if search_params.order_by:
+                for val in search_params.order_by:
+                    field = getattr(model, val.field)
+                    direction = getattr(field, val.direction)
+                    if val.nullsmode:
+                        direction = getattr(direction(), val.nullsmode)
+                    query = query.order_by(direction())
+            else:
+                pks = primary_key_names(model)
+                pk_order = (getattr(model, field).asc() for field in pks)
+                query = query.order_by(*pk_order)
 
         # Limit it
         if search_params.limit:
@@ -378,6 +385,10 @@ class QueryBuilder(object):
         if search_params.offset:
             query = query.offset(search_params.offset)
         return query
+
+
+def create_filters(model, search_params):
+    return QueryBuilder._create_filters(model, search_params)
 
 
 def create_query(session, model, searchparams):
@@ -428,3 +439,22 @@ def search(session, model, search_params):
         # may raise NoResultFound or MultipleResultsFound
         return query.one()
     return query
+
+
+def paginated(query, page_num, results_per_page, model_dict_kargs=None,
+              relload=None, num_results=None):
+    if num_results is None:
+        num_results = query.count()
+    if results_per_page > 0:
+        # get the page number (first page is page 1)
+        start = (page_num - 1) * results_per_page
+        end = min(num_results, start + results_per_page)
+        total_pages = int(math.ceil(float(num_results) / results_per_page))
+    else:
+        page_num = 1
+        start = 0
+        end = num_results
+        total_pages = 1
+    objects = [to_dict(x, **(model_dict_kargs or {})) for x in query[start:end]]
+    return dict(page=page_num, objects=objects, total_pages=total_pages,
+                num_results=num_results)

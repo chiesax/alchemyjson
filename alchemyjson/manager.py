@@ -20,7 +20,7 @@ from sqlalchemy.orm import joinedload
 from sqlalchemy.sql.functions import func
 from alchemyjson.utils.helpers import to_dict, evaluate_functions, count, primary_key_names, has_field, get_columns, \
     get_relations, strings_to_dates
-from alchemyjson.utils.search import SearchParameters, create_query, OPERATORS
+from alchemyjson.utils.search import SearchParameters, create_query, OPERATORS, paginated
 
 __author__ = 'chiesa'
 
@@ -166,20 +166,8 @@ class Manager(object):
              "objects": [{"id": 1, "name": "Jeffrey", "age": 24}, ...]
            }
         """
-        num_results = query.count()
-        if results_per_page > 0:
-            # get the page number (first page is page 1)
-            start = (page_num - 1) * results_per_page
-            end = min(num_results, start + results_per_page)
-            total_pages = int(math.ceil(float(num_results) / results_per_page))
-        else:
-            page_num = 1
-            start = 0
-            end = num_results
-            total_pages = 1
-        objects = [to_dict(x, **(model_dict_kargs or {})) for x in query[start:end]]
-        return dict(page=page_num, objects=objects, total_pages=total_pages,
-                    num_results=num_results)
+        return paginated(query, page_num, results_per_page, model_dict_kargs=None,
+                         relload=None)
 
     def _create_query(self, session, model, search_params):
         """Builds an SQLAlchemy query instance based on the search parameters
