@@ -443,6 +443,14 @@ def search(session, model, search_params):
 
 def paginated(query, page_num, results_per_page, model_dict_kargs=None,
               relload=None, num_results=None):
+    start, end, page_num, total_pages, num_results = get_pagination(query, page_num, results_per_page, num_results)
+    objects = [to_dict(x, **(model_dict_kargs or {})) for x in query[start:end]]
+    return dict(page=page_num, objects=objects, total_pages=total_pages,
+                num_results=num_results)
+
+
+def get_pagination(query, page_num, results_per_page,
+                   num_results=None):
     if num_results is None:
         num_results = query.count()
     if results_per_page > 0:
@@ -455,6 +463,4 @@ def paginated(query, page_num, results_per_page, model_dict_kargs=None,
         start = 0
         end = num_results
         total_pages = 1
-    objects = [to_dict(x, **(model_dict_kargs or {})) for x in query[start:end]]
-    return dict(page=page_num, objects=objects, total_pages=total_pages,
-                num_results=num_results)
+    return start, end, page_num, total_pages, num_results
