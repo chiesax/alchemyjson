@@ -166,8 +166,8 @@ class Manager(object):
              "objects": [{"id": 1, "name": "Jeffrey", "age": 24}, ...]
            }
         """
-        return paginated(query, page_num, results_per_page, model_dict_kargs=None,
-                         relload=None)
+        return paginated(query, page_num, results_per_page, model_dict_kargs,
+                         relload)
 
     def _create_query(self, session, model, search_params):
         """Builds an SQLAlchemy query instance based on the search parameters
