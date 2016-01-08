@@ -326,7 +326,7 @@ class QueryBuilder(object):
         return opfunc(field, argument, fieldname)
 
     @staticmethod
-    def _create_filters_old(model, search_params):
+    def _create_filters(model, search_params):
         """Returns the list of operations on `model` specified in the
         :attr:`filters` attribute on the `search_params` object.
         `search-params` is an instance of the :class:`SearchParameters` class
@@ -337,25 +337,10 @@ class QueryBuilder(object):
         Pre-condition: the ``search_params.filters`` is a (possibly empty)
         iterable.
         """
-        filters = []
-        for filt in search_params.filters:
-            fname = filt.fieldname
-            val = filt.argument
-            # get the relationship from the field name, if it exists
-            relation = None
-            if '__' in fname:
-                relation, fname = fname.split('__')
-            # get the other field to which to compare, if it exists
-            if filt.otherfield:
-                val = getattr(model, filt.otherfield)
-            # for the sake of brevity...
-            create_op = QueryBuilder._create_operation
-            param = create_op(model, fname, filt.operator, val, relation)
-            filters.append(param)
-        return filters
+        return QueryBuilder._create_filters_recursive(model, search_params.filters)
 
     @staticmethod
-    def _create_filters(model, filters):
+    def _create_filters_recursive(model, filters):
         """Returns the list of operations on `model` specified in the
         :attr:`filters` attribute on the `search_params` object.
         `search-params` is an instance of the :class:`SearchParameters` class
@@ -369,8 +354,8 @@ class QueryBuilder(object):
         rsp = []
         for filt in filters:
             if isinstance(filt, Junction):
-                rsp.append(filt.junk(*QueryBuilder._create_filters(model,
-                                                               filt.filters)))
+                rsp.append(filt.junk(*QueryBuilder._create_filters_recursive(model,
+                                                                            filt.filters)))
             else:
                 fname = filt.fieldname
                 val = filt.argument
@@ -408,7 +393,7 @@ class QueryBuilder(object):
         # Adding field filters
         query = session_query(session, model)
         # may raise exception here
-        filters = QueryBuilder._create_filters(model, search_params.filters)
+        filters = QueryBuilder._create_filters(model, search_params)
         query = query.filter(search_params.junction(*filters))
         return QueryBuilder.finalize_query(model, query, search_params)
 
