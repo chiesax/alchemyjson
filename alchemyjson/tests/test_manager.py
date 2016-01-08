@@ -34,7 +34,7 @@ class TestMain(unittest.TestCase):
         self.assertDictEqual(rsp1, {'count__id':1})
         rsp2 = self.manager.select('employees', {'functions':[{'name':'count',
                                                             'field':'id'}]})
-        self.assertDictEqual(rsp2, {'count__id':2})
+        self.assertDictEqual(rsp2, {'count__id':4})
         rsp3 = self.manager.select('managers', {'filters':[{'name':'name',
                                                                'op':'eq',
                                                                'val':'johnny'}],
@@ -83,3 +83,18 @@ class TestMain(unittest.TestCase):
                                    {'to_dict': {'deep':{'employees':[]}},
                                    'joinedload': ['employees']})
         pass
+
+    def test_composite_junction(self):
+        rsp = self.manager.select('employees', {'filters': [{'junk': 'and',
+                                                            'filters': [{'junk': 'or',
+                                                                         'filters': [{'name': 'name',
+                                                                                      'op': 'eq',
+                                                                                      'val': 'jack'},
+                                                                                     {'name': 'name',
+                                                                                      'op': 'eq',
+                                                                                      'val': 'francy'}]},
+                                                                         {'junk': 'or',
+                                                                          'filters': [{'name': 'surname',
+                                                                                       'op': 'eq',
+                                                                                       'val': 'j'}]}]}]})
+        self.assertEqual(rsp['num_results'], 1)
